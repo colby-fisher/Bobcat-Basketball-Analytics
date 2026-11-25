@@ -221,3 +221,20 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+# Virtual environments
+.venv/
+.venv-1/
+
+# Local development files
+.agents/
+app_backup.py
+.DS_Store
+__pycache__/
+
+# Credentials
+.env
+.streamlit/secrets.toml
+
+# Local datasets and generated outputs
+data/
+visualizations/
