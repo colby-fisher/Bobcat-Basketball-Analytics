@@ -224,7 +224,10 @@ player_files = {
     "2026-27": "advanced_player_stats_2026_27.csv"
 }
 
-
+if not (DATA.parent / "bobcat_analytics.db").exists():
+    st.title("Bobcat Analytics Lab")
+    st.info("The hosted dashboard is currently being prepared.")
+    st.stop()
 games = load_csv(game_files[season]).copy()
 players = load_csv(player_files[season]).copy()
 
