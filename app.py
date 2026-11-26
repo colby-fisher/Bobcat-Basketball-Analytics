@@ -22,6 +22,22 @@ GREEN = "#4ADE80"
 
 DATA = Path(__file__).resolve().parent / "data" / "cleaned"
 
+import os
+
+LOCAL_DATABASE = DATA.parent / "bobcat_analytics.db"
+DEMO_DATABASE = DATA.parent.parent / "demo" / "bobcat_demo.db"
+
+DEMO_MODE = (
+    os.environ.get("BOBCAT_DEMO") == "1"
+    or not LOCAL_DATABASE.exists()
+)
+
+ACTIVE_DATABASE = (
+    DEMO_DATABASE if DEMO_MODE else LOCAL_DATABASE
+)
+
+TEAM_NAME = "Demo Team" if DEMO_MODE else "Montana State"
+
 
 st.markdown("""
 <style>
@@ -95,6 +111,9 @@ st.sidebar.title("BOBCAT ANALYTICS")
 st.sidebar.caption("Basketball Intelligence Platform")
 st.sidebar.caption("Data source: SQLite Database")
 
+if DEMO_MODE:
+    st.sidebar.warning("SYNTHETIC DEMONSTRATION DATA")
+
 season = st.sidebar.selectbox(
     "Select season",
     ["2026-27", "2025-26"]
@@ -124,6 +143,8 @@ if st.sidebar.button("Reload local data"):
 st.sidebar.divider()
 
 st.sidebar.caption(
+    "Fictional demonstration dataset. No actual MSU statistics."
+    if DEMO_MODE else
     "Independent analytics project using publicly "
     "available Montana State basketball statistics."
 )
@@ -141,7 +162,7 @@ def load_csv(filename):
     import sqlite3
     from contextlib import closing
 
-    database = DATA.parent / "bobcat_analytics.db"
+    database = ACTIVE_DATABASE
 
     if not database.exists():
         raise FileNotFoundError(
@@ -224,10 +245,17 @@ player_files = {
     "2026-27": "advanced_player_stats_2026_27.csv"
 }
 
-if not (DATA.parent / "bobcat_analytics.db").exists():
+if not ACTIVE_DATABASE.exists():
     st.title("Bobcat Analytics Lab")
     st.info("The hosted dashboard is currently being prepared.")
     st.stop()
+if DEMO_MODE:
+    st.warning(
+        "DEMONSTRATION MODE — All displayed statistics "
+        "are fictional and do not represent actual "
+        "Montana State basketball performance."
+    )
+
 games = load_csv(game_files[season]).copy()
 players = load_csv(player_files[season]).copy()
 
@@ -272,9 +300,7 @@ factor_labels = {
 # LOAD DATA
 # ==========================================
 
-@st.cache_data
-def load_csv(filename):
-    return pd.read_csv(DATA / filename)
+# All datasets are loaded through SQLite.
 
 
 game_files = {
@@ -301,7 +327,7 @@ st.markdown(
             BOBCAT ANALYTICS LAB
         </h1>
         <p style="color:#D6B778; margin:0;">
-            Montana State Basketball | {season}
+            {TEAM_NAME} Basketball | {season}
         </p>
     </div>
     """,
@@ -517,14 +543,14 @@ if page == "Executive Overview":
     "MSU_Points",
     "Opponent_Points"
 ]].rename(columns={
-    "MSU_Points": "Montana State",
+    "MSU_Points": TEAM_NAME,
     "Opponent_Points": "Opponent"
 })
 
         fig = px.line(
             scoring,
             x="Matchup",
-            y=["Montana State", "Opponent"],
+            y=[TEAM_NAME, "Opponent"],
             markers=True,
             color_discrete_sequence=[GOLD, NAVY],
             labels={
@@ -814,7 +840,7 @@ elif page == "Game Analysis":
         with home:
             st.markdown(
                 f"""
-<h4 style="text-align:center; color:#D6B778;">MONTANA STATE</h4>
+<h4 style="text-align:center; color:#D6B778;">{TEAM_NAME.upper()}</h4>
 <h1 style="text-align:center; font-size:60px;">{int(game['MSU_Points'])}</h1>
 """,
                 unsafe_allow_html=True
@@ -938,7 +964,7 @@ elif page == "Game Analysis":
             "Free Throw Scoring Rate"
         ],
 
-        "Montana State": [
+        TEAM_NAME: [
             f"{game['FGM']}-{game['FGA']}",
             f"{game['3PM']}-{game['3PA']}",
             f"{game['FTM']}-{game['FTA']}",
@@ -1055,10 +1081,11 @@ elif page == "Game Analysis":
     )
 
     # Link to official source
-    st.link_button(
-        "View Official Game Box Score",
-        game["Box_Score_URL"]
-    )
+    if not DEMO_MODE:
+        st.link_button(
+            "View Official Game Box Score",
+            game["Box_Score_URL"]
+        )
 
     # PDF postgame report
     from report_generator import build_game_report
@@ -1071,7 +1098,7 @@ elif page == "Game Analysis":
         label="Download PDF Postgame Report",
         data=pdf_report,
         file_name=(
-            f"MSU_Postgame_"
+            ("DEMO_Postgame_" if DEMO_MODE else "MSU_Postgame_") +
             f"{game['Date'].strftime('%Y_%m_%d')}.pdf"
         ),
         mime="application/pdf",
@@ -1175,7 +1202,7 @@ elif page == "Player Evaluation":
             "3PA", "3P_PCT", "AST_TO"
         ]].round(2),
         hide_index=True,
-        use_container_width=True
+        width="stretch"
     )
 
     st.subheader("Individual Player Profile")
@@ -1304,7 +1331,7 @@ elif page == "Opponent Scouting":
 
     fig.update_layout(xaxis_title="Percentage Points")
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
     st.subheader("Potential Film Review Priorities")
 
@@ -1328,7 +1355,7 @@ elif page == "Opponent Scouting":
     st.dataframe(
         scouting.round(2),
         hide_index=True,
-        use_container_width=True
+        width="stretch"
     )
 
 
@@ -1393,7 +1420,7 @@ elif page == "Season Comparison":
 
     st.dataframe(
         comparison.round(2),
-        use_container_width=True
+        width="stretch"
     )
 
     st.subheader("Four Factors Comparison")
@@ -1418,7 +1445,7 @@ elif page == "Season Comparison":
         }
     )
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
     st.subheader("Returning Player Development")
 
@@ -1456,7 +1483,7 @@ elif page == "Season Comparison":
             ascending=False
         ).round(2),
         hide_index=True,
-        use_container_width=True
+        width="stretch"
     )
 
     st.caption(
@@ -1480,7 +1507,9 @@ st.download_button(
 )
 
 st.caption(
-    "Data source: Montana State Athletics | "
+    ("Source: Synthetic demonstration data | "
+     if DEMO_MODE else
+     "Data source: Montana State Athletics | ") +
     "Independent portfolio project | "
     "Not affiliated with Montana State University"
 )

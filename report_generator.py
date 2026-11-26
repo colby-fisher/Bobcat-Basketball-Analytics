@@ -43,6 +43,11 @@ FACTORS = [
 
 def build_game_report(game, season):
 
+    demo = (
+        game.get("Data_Type", "") ==
+        "SYNTHETIC DEMONSTRATION DATA"
+    )
+
     buffer = BytesIO()
     c = canvas.Canvas(buffer, pagesize=letter)
 
@@ -145,7 +150,7 @@ def build_game_report(game, season):
 
     text(
         left, 730,
-        "Postgame performance report",
+        "DEMO | Postgame report" if demo else "Postgame performance report",
         24, colors.white, True
     )
 
@@ -164,7 +169,7 @@ def build_game_report(game, season):
     teams = [
         (
             left + span * .25,
-            "Montana State",
+            "Demo Team" if demo else "Montana State",
             game["MSU_Points"]
         ),
         (
@@ -251,7 +256,7 @@ def build_game_report(game, season):
 
     text(
         left, 485,
-        "Positive differential favors Montana State; "
+        ("Positive differential favors Demo Team; " if demo else "Positive differential favors Montana State; ") +
         "lower turnover rate is better.",
         9, MUTED
     )
@@ -475,7 +480,9 @@ def build_game_report(game, season):
 
     text(
         left, 43,
-        "Source: Montana State Athletics | "
+        ("SYNTHETIC DATA - Not actual MSU statistics | "
+     if demo else
+     "Source: Montana State Athletics | ") +
         "Independent project, not affiliated with MSU.",
         8, MUTED
     )
