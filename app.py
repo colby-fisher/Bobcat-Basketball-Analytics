@@ -229,7 +229,12 @@ games = load_csv(game_files[season]).copy()
 players = load_csv(player_files[season]).copy()
 
 games["Date"] = pd.to_datetime(games["Date"])
+if not games.empty and games["Date"].notna().any():
+    latest_game_date = games["Date"].max()
 
+    st.sidebar.caption(
+        f"Data through: {latest_game_date.strftime('%b %d, %Y')}"
+    )
 if competition == "Division I only":
     games = games[
         games["Division_I"].astype(str)
@@ -664,7 +669,7 @@ elif page == "Team Analytics":
         line=dict(color="gray", dash="dash")
     )
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
     st.subheader("Four Factors by Game")
 
@@ -691,7 +696,7 @@ elif page == "Team Analytics":
         height=max(400, len(games) * 28)
     )
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
     st.subheader("Winning Percentage by Factors Won")
 
@@ -728,7 +733,7 @@ elif page == "Team Analytics":
 
     fig.update_yaxes(range=[0, 110])
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
     st.caption(
         "Bar labels show sample sizes. These are "
@@ -753,7 +758,7 @@ elif page == "Team Analytics":
 
     st.dataframe(
         comparison.round(2),
-        use_container_width=True
+        width="stretch"
     )
 
 
@@ -1142,7 +1147,7 @@ elif page == "Player Evaluation":
             line_dash="dash"
         )
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
     st.subheader("Player Performance Leaderboard")
 
